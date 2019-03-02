@@ -9,23 +9,22 @@ from stitch import _StitchImage
 
 
 def fitting_rectangle(*points):
-    # Return (left, top), (width, height)
-    top = left = float('inf')
-    right = bottom = float('-inf')
+    top = float('inf')
+    left = float('inf')
+    right = float('-inf')
+    bottom = float('-inf')
     for x, y in points:
-        if x < left:
-            left = x
         if x > right:
             right = x
-        if y < top:
-            top = y
         if y > bottom:
             bottom = y
+        if y < top:
+            top = y
+        if x < left:
+            left = x
     left = int(math.floor(left))
     top = int(math.floor(top))
-    width = int(math.ceil(right - left))
-    height = int(math.ceil(bottom - top))
-    return (left, top), (width, height)
+    return (left, top), (int(math.ceil(right - left)), int(math.ceil(bottom - top)))
 
 
 def im_pst(base, img, shift):
@@ -45,14 +44,12 @@ def colinfo(lab_image, mask=None):
 
 class ImageStitcher:
     def __init__(self, **kwargs):
-        self._matches = {}
         self._images = []
-
+        self._matches = {}
+        self.min_matches= 10
         self.ratio_threshold = 0.7
-        self.match_threshold = 10
-        self._center = None
+        self.centerp = None
         self._current_edge_matrix = None
-        self.debug = False
         self.matcher = cv2.BFMatcher_create(cv2.NORM_L2)
         for k, v in kwargs.items():
             if not hasattr(self, k):
@@ -61,11 +58,11 @@ class ImageStitcher:
             setattr(self, k, v)
 
     def add_image(self, image: Union[str, np.ndarray], name: str=None):
-        """Add an image to the current stitching process. Image must be RGB(A)"""
         if isinstance(image, str):
             if name is not None:
                 name = os.path.splitext(os.path.split(image)[1])[0]
             image = cv2.cvtColor(cv2.imread(image), cv2.COLOR_BGR2RGBA)
+        # 3 channels handling
         if image.shape[-1] == 3:
             image = cv2.cvtColor(image, cv2.COLOR_RGB2RGBA)
         image = _StitchImage(image, name=name)
@@ -74,35 +71,31 @@ class ImageStitcher:
         self._images.append(image)
 
         for oidx, other in enumerate(self._images[:-1]):
-            match = self._match_features(image, other)
+            match = self.match_features(image, other)
             if match is not None:
                 self._matches[(idx, oidx)] = match
 
     @property
     def center(self) -> int:
-        if self._center is None:
-            self._center = self._find_center()
-        return self._center
+        if self.centerp is None:
+            self.centerp = self._find_center()
+        return self.centerp
 
     @center.setter
     def center(self, val: int):
-        self._center = val
+        self.centerp = val
 
     def stitch(self):
-        """Perform the actual stitching - return the image of the result."""
+        """Main Stitch Func"""
         self.validate()
-        print(self._images[self.center].name, 'considered center image')
-        parents = csgraph.dijkstra(
-            self._edge_matrix,
-            directed=False, indices=self.center,
-            return_predecessors=True,
-        )[1]
+        print(self._images[self.center].name, 'considered image center')
+        parents = csgraph.dijkstra(self._edge_matrix, directed=False, indices=self.center, return_predecessors=True)[1]
         print('Parent matrix:\n', parents)
-        next_H = self._calculate_relative_homographies(parents)
-        Hs = self._calculate_total_homographies(parents, next_H)
-        all_new_corners = self._calculate_new_corners(Hs)
-        base_shift, base_size = np.array(self._calculate_bounds(all_new_corners))
-        order = self._calculate_draw_order(parents)
+        next_H = self.calculate_relative_homographies(parents)
+        Hs = self.calculate_total_homographies(parents, next_H)
+        all_new_corners = self.calculate_new_corners(Hs)
+        base_shift, base_size = np.array(self.calculate_bounds(all_new_corners))
+        order = self.calculate_draw_order(parents)
         canvas = np.zeros((base_size[1], base_size[0], 4), dtype=np.uint8)
         for i in order:
             image = self._images[i]
@@ -130,7 +123,7 @@ class ImageStitcher:
                 self._images[img].name for img in np.where(groups != most_common)[0]
             ))
 
-    def _calculate_new_corners(self, Hs) -> List[np.array]:
+    def calculate_new_corners(self, Hs) -> List[np.array]:
         all_new_corners = []
         for image, H in zip(self._images, Hs):
             img = image.image
@@ -142,7 +135,7 @@ class ImageStitcher:
             all_new_corners.append(new_corners)
         return all_new_corners
 
-    def _calculate_bounds(self, new_corners) -> Tuple[Tuple[int, int], Tuple[int, int]]:
+    def calculate_bounds(self, new_corners) -> Tuple[Tuple[int, int], Tuple[int, int]]:
         """Calculate the bounds required to hold all images transformed with the given corners"""
         all_corners = []
         for corners in new_corners:
@@ -153,7 +146,7 @@ class ImageStitcher:
         print('Final Size:', size)
         return corner, size
 
-    def _calculate_draw_order(self, parents):
+    def calculate_draw_order(self, parents):
         order = csgraph.depth_first_order(
             csgraph.reconstruct_path(self._edge_matrix, parents, directed=False),
             self.center,
@@ -166,7 +159,7 @@ class ImageStitcher:
         print(strf)
         return order
 
-    def _calculate_relative_homographies(self, parents):
+    def calculate_relative_homographies(self, parents):
         # Calculate each homography from the source to the destination
         c = self.center
         next_H = []
@@ -182,7 +175,7 @@ class ImageStitcher:
             next_H.append(H)
         return next_H
 
-    def _calculate_total_homographies(self, parents, next_H):
+    def calculate_total_homographies(self, parents, next_H):
         """Calculate the full homography each picture will have for the final image"""
         # Now that we have the homographies from each to its next-to-center,
         # calculate relative to the center
@@ -249,15 +242,14 @@ class ImageStitcher:
         print('New edge matrix:\n', self._current_edge_matrix.toarray())
         return self._current_edge_matrix
 
-    def _match_features(self, src: _StitchImage, dst: _StitchImage) -> Optional[List[cv2.DMatch]]:
-        """Match features between two images. Uses a ratio test to filter."""
+    def match_features(self, src: _StitchImage, dst: _StitchImage) -> Optional[List[cv2.DMatch]]:
         print('Matching features of', src.name, dst.name)
         matches = self.matcher.knnMatch(src.feat, dst.feat, k=2)
         # Ratio test
         good = [i for i, j in matches
                 if i.distance < self.ratio_threshold * j.distance]
         print(len(matches), 'features matched', len(good), 'of which are good')
-        if len(good) >= self.match_threshold:
+        if len(good) >= self.min_matches:
             print(src.name, '<=>', dst.name, 'score', len(good))
             return good
         return None
