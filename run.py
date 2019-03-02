@@ -11,8 +11,6 @@ import matplotlib.pyplot as plt
 from img_stitch import ImageStitcher
 from stitch import _StitchImage
 
-log = logging.getLogger('stitcher')
-
 def run():
     ''' Driving Function + Argument Handling
     '''
@@ -27,8 +25,6 @@ def run():
         '-b', '--base', type=int,
         help='Base Image Index')
     args = parser.parse_args()
-
-    log.setLevel(logging.DEBUG)
 
     stitch = ImageStitcher()
     if args.base is not None:

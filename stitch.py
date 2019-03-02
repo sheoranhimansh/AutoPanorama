@@ -1,14 +1,4 @@
-import os
-import math
-import logging
-import argparse
-from typing import Union, List, Optional, Tuple
-
 import cv2
-import numpy as np
-import scipy.sparse.csr as csr
-import scipy.sparse.csgraph as csgraph
-import matplotlib.pyplot as plt
 
 class _StitchImage:
     _lastIdx = 1
@@ -17,11 +7,7 @@ class _StitchImage:
         self.image = image
         self.kp = None
         self.feat = None
-        try:
-            self.feature_finder = cv2.xfeatures2d.SIFT_create()
-            matcher = cv2.BFMatcher_create(cv2.NORM_L2)
-        except AttributeError:
-            print("Install Sift")
+        self.feature_finder = cv2.xfeatures2d.SIFT_create()
 
         if name is None:
             name = '%02d' % (_StitchImage._lastIdx)
