@@ -36,9 +36,4 @@ def run():
     cv2.imwrite(args.output, cv2.cvtColor(result, cv2.COLOR_RGBA2BGRA))
     
 if __name__ == '__main__':
-    try:
-        feature_finder = cv2.xfeatures2d.SIFT_create()
-        matcher = cv2.BFMatcher_create(cv2.NORM_L2)
-    except AttributeError:
-        print("Install Sift")
     run()
