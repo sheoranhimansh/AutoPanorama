@@ -11,6 +11,9 @@ import matplotlib.pyplot as plt
 from img_stitch import ImageStitcher
 from stitch import _StitchImage
 
+def find_clusters(inputs):
+    return [inputs, inputs]
+
 def run():
     ''' Driving Function + Argument Handling
     '''
@@ -26,14 +29,20 @@ def run():
         help='Base Image Index')
     args = parser.parse_args()
 
-    stitch = ImageStitcher()
     if args.base is not None:
         stitch.center = args.base
-    for infile in args.input:
-        stitch.add_image(infile)
-    result = stitch.stitch()
 
-    cv2.imwrite(args.output, cv2.cvtColor(result, cv2.COLOR_RGBA2BGRA))
+    clusters = find_clusters(args.input) 
+    # Clusters is a list of lists, with each list being a group of pics to be stitched
+    for i,group in enumerate(clusters):
+        stitch = ImageStitcher()
+        for infile in group:
+            stitch.add_image(infile)
+        result = stitch.stitch()
+        cv2.imwrite(str(i) + "_" + args.output, cv2.cvtColor(result, cv2.COLOR_RGBA2BGRA))
+
+    # for infile in args.input:
+        # stitch.add_image(infile)
     
 if __name__ == '__main__':
     run()
