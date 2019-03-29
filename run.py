@@ -16,7 +16,7 @@ def find_matches(im1, im2, matcher):
     good = [i for i, j in matches if i.distance < 0.7 * j.distance]
     return len(good), len(matches)
 
-def find_clusters(inputs):
+def find_clusters(inputs, num_clusters):
     marking = {}
     for i,image in enumerate(inputs):
         if isinstance(image, str):
@@ -45,7 +45,11 @@ def find_clusters(inputs):
                     temp.append(0)
         edge_matrix.append(temp)
     adjacency_matrix = np.array(edge_matrix)
-    sc = SpectralClustering(3, affinity='precomputed', n_init=100)
+    w, v = np.linalg.eig(adjacency_matrix)
+    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    print(w)
+    print(v)
+    sc = SpectralClustering(num_clusters, affinity='precomputed', n_init=100)
     sc.fit(adjacency_matrix)
     groups = {}
     for i in range(len(sc.labels_)):
@@ -77,6 +81,9 @@ def run():
         '-o', required=True, dest='output',
         help='Where to put the resulting stitched image')
     parser.add_argument(
+        '-n', required=True, dest='num_clusters',
+        help='Expected number of panoramas(clusters) in the image set')
+    parser.add_argument(
         '-b', '--base', type=int,
         help='Base Image Index')
     args = parser.parse_args()
@@ -84,14 +91,17 @@ def run():
     if args.base is not None:
         stitch.center = args.base
 
-    clusters = find_clusters(args.input) 
+    clusters = find_clusters(args.input, int(args.num_clusters)) 
     # Clusters is a list of lists, with each list being a group of pics to be stitched
     for i,group in enumerate(clusters):
         stitch = ImageStitcher()
         for infile in group:
             stitch.add_image(infile)
-        result = stitch.stitch()
-        cv2.imwrite(str(i) + "_" + args.output, cv2.cvtColor(result, cv2.COLOR_RGBA2BGRA))
+        try:
+            result = stitch.stitch()
+            cv2.imwrite(str(i) + "_" + args.output, cv2.cvtColor(result, cv2.COLOR_RGBA2BGRA))
+        except:
+            print("Only One File Input")
     
 if __name__ == '__main__':
     run()
