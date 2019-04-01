@@ -28,12 +28,29 @@ def fitting_rectangle(*points):
 
 
 def im_pst(base, img, shift):
+    print('---------------------------------------------------------------------------')
+    print("Pasting...")
     h, w = img.shape[:2]
     x, y = shift
     dest_slice = np.s_[y:y + h, x:x + w]
     dest = base[dest_slice]
     dest = cv2.add(cv2.bitwise_and(dest, dest, mask=(255 - img[..., 3])), img)
-    base[dest_slice] = dest
+    try:
+        for i in range(y, y+h):
+            for j in range(x, x+w):
+                if list(base[i][j]) == [0, 0, 0, 0]:
+                    base[i][j] = dest[i-y][j-x]
+                else:
+                    new = np.around((base[i][j] + dest[i-y][j-x]) )
+                    print("Original", base[i][j])
+                    base[i][j] = new
+                    print(new, dest[i-y][j-x])
+                    # base[i][j] = dest[i-y][j-x]
+    except Exception as e:
+        print("Failed@@@@@@@@@@@@@@@@@@@@")
+        print(e)
+    print('---------------------------------------------------------------------------')
+    #base[dest_slice] = dest
     return
 
 
@@ -110,7 +127,11 @@ class ImageStitcher:
             Ht = T.dot(H)
             print('Translated homography:\n', Ht)
             new_image = cv2.warpPerspective(image.image, Ht, tuple(size), flags=cv2.INTER_LINEAR,)
-            im_pst(canvas, new_image, dest_shift)
+            try:
+                im_pst(canvas, new_image, dest_shift)
+            except Exception as e:
+                print("Caught at func call")
+                print(e)
         return canvas
 
     def validate(self):

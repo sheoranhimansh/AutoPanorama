@@ -100,7 +100,8 @@ def run():
         try:
             result = stitch.stitch()
             cv2.imwrite(str(i) + "_" + args.output, cv2.cvtColor(result, cv2.COLOR_RGBA2BGRA))
-        except:
+        except Exception as e:
+            print(e)
             print("Only One File Input")
     
 if __name__ == '__main__':
