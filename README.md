@@ -38,4 +38,8 @@ Input : n unordered images (belonging to the same panorama)
 
 Output: Panorama Image
 
+## RESULTS:
 
+![alt text](https://raw.githubusercontent.com/username/projectname/branch/path/to/img.png)
+![alt text](https://github.com/sheoranhimansh/AutoPanorama/blob/master/0_2_output.png)
+![alt text](https://github.com/sheoranhimansh/AutoPanorama/blob/master/1_2_output.png)
