@@ -34,6 +34,12 @@ Feature based registration does not require initialisation, but traditional feat
 3) The concept of matching relationships between the images and recognizing panoramas can be extended to multiple panorama where there exist a bunch of images belonging to different panoramas and our approach can create different panoramas out of it.
 4) We also go one step further to solve the problem to  automatically straighten out the the panoramic images thus removing the black pixels.
 
+## CLUSTERING MODEL FOR IMAGE MATCH VERIFICATION INTRA CLASS:
+In order to acquire unordered images belonging to the same panorama we need to separate images and cluster the images belonging to same class. We approach this as a clustering problem and try to solve it through spectral clustering. 
+
+Spectral clustering techniques make use of the spectrum (eigenvalues) of the similarity matrix of the data to perform dimensionality reduction before clustering in fewer dimensions. The similarity matrix is provided as an input and consists of a quantitative assessment of the relative similarity of each pair of points in the dataset.  
+The general approach to spectral clustering is to use a standard clustering method on relevant eigenvectors of a Laplacian matrix. There are many different ways to define a Laplacian which have different mathematical interpretations, and so the clustering will also have different interpretations. The eigenvectors that are relevant are the ones that correspond to smallest several eigenvalues of the Laplacian except for the smallest eigenvalue which will have a value of 0. For computational efficiency, these eigenvectors are often computed as the eigenvectors corresponding to the largest several eigenvalues of a function of the Laplacian. 
+
 ## ALGORITHM FOLLOWED:
 
 Input : n unordered images (belonging to the same panorama)
