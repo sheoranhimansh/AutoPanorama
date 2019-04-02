@@ -9,10 +9,10 @@ Implementation of IJCV 2007 David Lowe (Automatic Panoramic Image Stitching usin
 ## python command:
 python3 run.py demo/* -o output.png -n 4 -f 1
 
--- Here n -> number of different panoramas present in the dataset
---  f = 1 Use SIFT Features
--- f = 2 Use Dense SIFT Feature
--- f = 3 Use Window based Correlation Feature
+#### n -> number of different panoramas present in the dataset
+#### f => 1 Use SIFT Features
+#### f => 2 Use Dense SIFT Feature
+#### f => 3 Use Window based Correlation Feature
 
 ## PROBLEM STATEMENT:
 This Project concerns the problem of automatic panoramic image stitching. Though the 1D problem (single axis of rotation) is well studied, 2D or multi-row stitching is more difficult. Previous approaches have used human input or restrictions on the image sequence in order to establish matching images. In this work, we formulate stitching as a multi-image matching problem, and use invariant local features to find matches between all of the images. Because of this our method is insensitive to the ordering, orientation, scale and illumination of the input images. It is also insensitive to noise images that are not part of a panorama, and can recognise multiple panoramas in an unordered image dataset.
