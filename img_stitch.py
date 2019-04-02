@@ -34,23 +34,28 @@ def im_pst(base, img, shift):
     x, y = shift
     dest_slice = np.s_[y:y + h, x:x + w]
     dest = base[dest_slice]
+    # dest = cv2.add(cv2.bitwise_and(dest, dest, mask=(255 - img[..., 3])), img)
     dest = cv2.add(cv2.bitwise_and(dest, dest, mask=(255 - img[..., 3])), img)
-    try:
-        for i in range(y, y+h):
-            for j in range(x, x+w):
-                if list(base[i][j]) == [0, 0, 0, 0]:
-                    base[i][j] = dest[i-y][j-x]
-                else:
-                    new = np.around((base[i][j] + dest[i-y][j-x]) )
-                    print("Original", base[i][j])
-                    base[i][j] = new
-                    print(new, dest[i-y][j-x])
+    # try:
+        # for i in range(y, y+h):
+            # for j in range(x, x+w):
+                # if list(base[i][j]) == [0, 0, 0, 0]:
                     # base[i][j] = dest[i-y][j-x]
-    except Exception as e:
-        print("Failed@@@@@@@@@@@@@@@@@@@@")
-        print(e)
+                # else:
+                    # b1 = list(base[i][j])
+                    # d1 = list(dest[i-y][j-x])
+                    # a = []
+                    # for i in range(len(b1)):
+                        # a.append(int((b1[i] + d1[i])/2))
+                    # # new = np.around((base[i][j] + dest[i-y][j-x]))
+                    # print("Original", base[i][j], "Dst", list(dest[i-y][j-x]), "Alt_dst", dest[i-y][j-x], "Sum", a) 
+                    # base[i][j] = np.array(a)
+                    # # base[i][j] = dest[i-y][j-x]
+    # except Exception as e:
+        # print("Failed@@@@@@@@@@@@@@@@@@@@")
+        # print(e)
     print('---------------------------------------------------------------------------')
-    #base[dest_slice] = dest
+    base[dest_slice] = dest
     return
 
 
